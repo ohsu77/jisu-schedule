@@ -36,8 +36,12 @@ async function runOnce(browser, simulateOldIOS) {
 
   if (simulateOldIOS) {
     await page.addInitScript(() => {
-      // pretend Promise.withResolvers does not exist (iOS Safari < 17.4)
+      // simulate iOS Safari < 17.4: no Promise.withResolvers, no async-iterable ReadableStream
       try { delete Promise.withResolvers } catch { /* noop */ }
+      try {
+        delete ReadableStream.prototype[Symbol.asyncIterator]
+        delete ReadableStream.prototype.values
+      } catch { /* noop */ }
     })
   }
 

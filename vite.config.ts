@@ -13,12 +13,21 @@ function pdfWorkerWithPolyfill(): Plugin {
   const polyfill =
     "if(typeof Promise.withResolvers!=='function'){" +
     'Promise.withResolvers=function(){var a,b;var p=new Promise(function(r,j){a=r;b=j;});' +
-    'return{promise:p,resolve:a,reject:b};};}\n'
+    'return{promise:p,resolve:a,reject:b};};}\n' +
+    "(function(){if(typeof ReadableStream==='undefined')return;var P=ReadableStream.prototype;" +
+    "if(typeof P[Symbol.asyncIterator]==='function')return;" +
+    'P.values=function(o){var preventCancel=!!(o&&o.preventCancel);var reader=this.getReader();' +
+    'var it={next:function(){return reader.read().then(function(r){if(r.done)reader.releaseLock();return r;},' +
+    'function(e){reader.releaseLock();throw e;});},' +
+    'return:function(value){if(!preventCancel){var c=reader.cancel(value);reader.releaseLock();' +
+    'return c.then(function(){return{done:true,value:value};});}reader.releaseLock();' +
+    'return Promise.resolve({done:true,value:value});}};' +
+    'it[Symbol.asyncIterator]=function(){return this;};return it;};' +
+    'P[Symbol.asyncIterator]=P.values;})();\n'
   let cached = ''
   const build = () => {
     if (!cached) {
-      // non-minified worker (temporary) so worker errors are readable too
-      const p = require.resolve('pdfjs-dist/build/pdf.worker.mjs')
+      const p = require.resolve('pdfjs-dist/build/pdf.worker.min.mjs')
       cached = polyfill + readFileSync(p, 'utf8')
     }
     return cached
@@ -41,8 +50,6 @@ function pdfWorkerWithPolyfill(): Plugin {
 
 export default defineConfig({
   base: '/',
-  // TEMP: keep readable for an iOS error diagnosis (revert after)
-  build: { minify: false },
   plugins: [
     pdfWorkerWithPolyfill(),
     react(),
