@@ -13,6 +13,18 @@ import { DayDetail } from './components/DayDetail'
 import { ReviewTable } from './components/ReviewTable'
 import { ExportBar } from './components/ExportBar'
 
+function describeError(e: unknown): string {
+  const err = e as { name?: string; message?: string; stack?: string }
+  const head = `${err?.name ?? 'Error'}: ${err?.message ?? String(e)}`
+  const frames = err?.stack
+    ?.split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+    .join('\n')
+  return frames && !frames.startsWith(head) ? `${head}\n\n${frames}` : head
+}
+
 export default function App() {
   const [initials, setInitials] = useState(loadInitials)
   const [data, setData] = useState<ArrayBuffer | null>(null)
@@ -71,7 +83,7 @@ export default function App() {
         const item = loadHistory().find((x) => x.id === activeId)
         if (item) setHistory(upsertItem({ ...item, schedule: s, initials, savedAt: Date.now() }))
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(describeError(e)))
       .finally(() => setBusy(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initials])
@@ -96,7 +108,7 @@ export default function App() {
       setHistory(upsertItem(item))
       setShowEdit(false)
     } catch (e) {
-      setError((e as Error).message)
+      setError(describeError(e))
       setSchedule(null)
     } finally {
       setBusy(false)
@@ -150,7 +162,9 @@ export default function App() {
         />
 
         {error && (
-          <p className="rounded-lg bg-red-50 text-red-700 text-sm px-3 py-2">{error}</p>
+          <p className="rounded-lg bg-red-50 text-red-700 text-xs px-3 py-2 whitespace-pre-wrap break-words font-mono leading-relaxed">
+            {error}
+          </p>
         )}
 
         {schedule && (

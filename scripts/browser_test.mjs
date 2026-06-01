@@ -4,7 +4,7 @@
 //   2) simulating iOS Safari < 17.4 (Promise.withResolvers removed before load)
 //      to verify the polyfill actually works.
 // Usage: node scripts/browser_test.mjs [liveURL]
-import { chromium } from 'playwright-core'
+import { chromium, webkit } from 'playwright-core'
 import { spawn } from 'node:child_process'
 import { setTimeout as sleep } from 'node:timers/promises'
 
@@ -67,8 +67,12 @@ async function runOnce(browser, simulateOldIOS) {
 let code = 1
 try {
   if (!target) await waitServer()
-  const browser = await chromium.launch({ channel: 'chrome', headless: true })
-  console.log('대상:', base)
+  const engine = process.env.ENGINE === 'webkit' ? 'webkit' : 'chrome'
+  const browser =
+    engine === 'webkit'
+      ? await webkit.launch({ headless: true })
+      : await chromium.launch({ channel: 'chrome', headless: true })
+  console.log('엔진:', engine, '| 대상:', base)
   const a = await runOnce(browser, false)
   const b = await runOnce(browser, true)
   await browser.close()

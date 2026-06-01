@@ -17,7 +17,8 @@ function pdfWorkerWithPolyfill(): Plugin {
   let cached = ''
   const build = () => {
     if (!cached) {
-      const p = require.resolve('pdfjs-dist/build/pdf.worker.min.mjs')
+      // non-minified worker (temporary) so worker errors are readable too
+      const p = require.resolve('pdfjs-dist/build/pdf.worker.mjs')
       cached = polyfill + readFileSync(p, 'utf8')
     }
     return cached
@@ -40,6 +41,8 @@ function pdfWorkerWithPolyfill(): Plugin {
 
 export default defineConfig({
   base: '/',
+  // TEMP: keep readable for an iOS error diagnosis (revert after)
+  build: { minify: false },
   plugins: [
     pdfWorkerWithPolyfill(),
     react(),
