@@ -2,12 +2,12 @@
 // pure extractor. Runs entirely client-side — the PDF never leaves the device.
 
 import * as pdfjs from 'pdfjs-dist'
-import PdfWorker from './pdfWorker?worker'
 import type { Token } from './schedule'
 
-// Use a bundled worker that polyfills Promise.withResolvers in the worker scope
-// (needed for older iOS Safari). workerPort takes precedence over workerSrc.
-pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker()
+// Standard worker load via a self-hosted file in public/. That file is the
+// pdfjs worker with a Promise.withResolvers polyfill prepended (see
+// scripts/prepare-worker.mjs) so it also runs on iOS Safari < 17.4.
+pdfjs.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`
 
 export async function pdfToTokens(data: ArrayBuffer): Promise<Token[]> {
   const pdf = await pdfjs.getDocument({ data }).promise

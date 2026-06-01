@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/prepare-worker.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/prepare-worker.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test:parse": "tsx scripts/parse_test.ts"
@@ -21,6 +23,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "playwright-core": "^1.60.0",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",

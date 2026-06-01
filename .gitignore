@@ -8,5 +8,8 @@ dist-ssr
 .vercel
 .claude/
 
+# generated at build (predev/prebuild) from node_modules
+public/pdf.worker.min.mjs
+
 # personal data — real schedule PDFs (colleagues' names, flights)
 samples/*.pdf

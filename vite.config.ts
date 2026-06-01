@@ -5,7 +5,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/',
-  worker: { format: 'es' },
   plugins: [
     react(),
     tailwindcss(),
@@ -20,6 +19,9 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
+        icons: [
+          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        ],
       },
     }),
   ],
