@@ -1,4 +1,2 @@
-# keep dev-only + personal data out of the deploy
+# keep personal data out of the deploy (also gitignored)
 samples
-scripts
-*.md
