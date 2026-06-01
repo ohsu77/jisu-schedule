@@ -6,6 +6,7 @@ dist-ssr
 .env
 .env.local
 .vercel
+.claude/
 
 # personal data — real schedule PDFs (colleagues' names, flights)
 samples/*.pdf
