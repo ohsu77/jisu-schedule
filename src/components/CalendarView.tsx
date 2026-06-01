@@ -15,6 +15,10 @@ export function CalendarView({ schedule, initials, onSelectDay }: Props) {
   const byDate = new Map<string, DaySchedule>()
   for (const d of schedule.days) byDate.set(key(d.year, d.month, d.date), d)
 
+  // "today" — evaluated on every render, so it follows the real date day-to-day
+  const now = new Date()
+  const todayKey = key(now.getFullYear(), now.getMonth() + 1, now.getDate())
+
   // build the month grid as real dates so adjacent-month days land in lead/trail cells
   const firstDow = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -58,6 +62,7 @@ export function CalendarView({ schedule, initials, onSelectDay }: Props) {
           const day = byDate.get(key(y, m, dnum))
           const work = day?.status === 'work'
           const style = day?.role ? ROLE_STYLE[day.role] : undefined
+          const isToday = key(y, m, dnum) === todayKey
 
           return (
             <button
@@ -66,21 +71,29 @@ export function CalendarView({ schedule, initials, onSelectDay }: Props) {
               disabled={!day}
               className={`min-h-16 text-left border-b border-r border-slate-100 p-1 flex flex-col gap-0.5 transition ${
                 col === 6 ? 'border-r-0' : ''
-              } ${inMonth ? '' : 'bg-slate-50'} ${day ? 'active:bg-slate-100' : ''}`}
+              } ${isToday ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-300' : inMonth ? '' : 'bg-slate-50'} ${
+                day ? 'active:bg-slate-100' : ''
+              }`}
             >
-              <span
-                className={`text-xs font-semibold ${
-                  !inMonth
-                    ? 'text-slate-300'
-                    : col === 0
-                      ? 'text-rose-500'
-                      : col === 6
-                        ? 'text-blue-500'
-                        : 'text-slate-500'
-                }`}
-              >
-                {dnum}
-              </span>
+              {isToday ? (
+                <span className="inline-flex items-center justify-center self-start min-w-5 h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold tabular-nums shadow-sm">
+                  {dnum}
+                </span>
+              ) : (
+                <span
+                  className={`text-xs font-semibold ${
+                    !inMonth
+                      ? 'text-slate-300'
+                      : col === 0
+                        ? 'text-rose-500'
+                        : col === 6
+                          ? 'text-blue-500'
+                          : 'text-slate-500'
+                  }`}
+                >
+                  {dnum}
+                </span>
+              )}
 
               {work && style && (
                 <span
