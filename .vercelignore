@@ -1,0 +1,4 @@
+# keep dev-only + personal data out of the deploy
+samples
+scripts
+*.md
