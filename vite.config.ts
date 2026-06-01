@@ -46,6 +46,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Kill any stuck service worker + clear its cache on all devices.
+      // (PWA offline/install disabled for now to avoid stale-cache issues.)
+      selfDestroying: true,
       manifest: {
         name: '대한항공 스케줄',
         short_name: '대한항공',
