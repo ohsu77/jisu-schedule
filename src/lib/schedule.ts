@@ -14,6 +14,40 @@ export interface RosterEntry {
   sub?: string    // sub-assistant initials (was in parentheses)
 }
 
+/**
+ * One remark (RMK/비고 column) line for a day. The sheet writes these as
+ *   "<targets/-joined> - <activity> (<related>)"  e.g. "ML/CH/JP - QA TRAINING (KN)"
+ * targets are the people the note is about; related is the trailer in parens
+ * (usually the trainer/instructor). `text` keeps the full raw line for display.
+ */
+export interface DayNote {
+  text: string        // full raw line, e.g. "SL/CC/NH - LVL TRAINING (SE)"
+  targets: string[]   // subject initials before the dash: ['SL','CC','NH']
+  related?: string    // initial in trailing parens: 'SE'
+}
+
+/** Parse a raw RMK line into a structured note (targets / related / text). */
+export function parseNote(raw: string): DayNote {
+  const text = raw.replace(/\s+/g, ' ').trim()
+  const targets: string[] = []
+  // left side: 1-3 uppercase-letter initials, optionally many joined by "/", then a dash
+  const m = text.match(/^([A-Z]{1,3}(?:\/[A-Z]{1,3})*)\s*-\s*/)
+  if (m) {
+    for (const t of m[1].split('/')) if (t) targets.push(t.toUpperCase())
+  }
+  // related: a trailing "(XX)" holding a pure-letter initial (skips "(VC 1325)" etc.)
+  let related: string | undefined
+  const rel = [...text.matchAll(/\(([A-Z]{1,3})\)/g)]
+  if (rel.length) related = rel[rel.length - 1][1].toUpperCase()
+  return { text, targets, related }
+}
+
+/** Does this note concern the viewer (as a subject or the related/trainer)? */
+export function noteInvolves(n: DayNote, initials: string): boolean {
+  const who = initials.trim().toUpperCase()
+  return !!who && (n.targets.includes(who) || n.related === who)
+}
+
 /** One day of the schedule (for everyone), with the viewer's own slot resolved. */
 export interface DaySchedule {
   year: number          // actual year of this date (handles adjacent months)
@@ -24,6 +58,7 @@ export interface DaySchedule {
   role?: Role           // my assigned position when working
   sub?: boolean         // I'm a sub-assistant
   roster: RosterEntry[] // full team assignment that day
+  notes?: DayNote[]     // RMK/비고 column lines for this day (may be empty/undefined)
 }
 
 /** Whole parsed sheet for one viewer. */

@@ -1,4 +1,4 @@
-import { ROLE_COLS, ROLE_STYLE, type DaySchedule } from '../lib/schedule'
+import { ROLE_COLS, ROLE_STYLE, noteInvolves, type DaySchedule } from '../lib/schedule'
 
 const WD_KO: Record<string, string> = {
   Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토', Sun: '일',
@@ -14,6 +14,7 @@ export function DayDetail({ day, initials, onClose }: Props) {
   const who = initials.toUpperCase()
   const byRole = new Map(day.roster.map((e) => [e.role, e]))
   const wd = WD_KO[day.weekday] ?? '?'
+  const notes = day.notes ?? []
 
   return (
     <div
@@ -41,6 +42,30 @@ export function DayDetail({ day, initials, onClose }: Props) {
             ×
           </button>
         </div>
+
+        {notes.length > 0 && (
+          <div className="px-4 py-3 border-b border-slate-100 bg-amber-50/50">
+            <div className="text-xs font-bold text-amber-700 mb-1.5">📌 비고</div>
+            <ul className="flex flex-col gap-1.5">
+              {notes.map((n, i) => {
+                const mine = noteInvolves(n, who)
+                return (
+                  <li
+                    key={i}
+                    className={`text-sm rounded-lg px-2.5 py-1.5 leading-snug ${
+                      mine
+                        ? 'bg-amber-100 text-amber-900 font-semibold ring-1 ring-inset ring-amber-300'
+                        : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-100'
+                    }`}
+                  >
+                    {mine && <span className="mr-1">★</span>}
+                    {n.text}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
 
         <ul className="divide-y divide-slate-100">
           {ROLE_COLS.map((role) => {

@@ -1,4 +1,4 @@
-import { ROLE_STYLE, type DaySchedule, type ParsedSchedule } from '../lib/schedule'
+import { ROLE_STYLE, noteInvolves, type DaySchedule, type ParsedSchedule } from '../lib/schedule'
 
 const WD_KO = ['일', '월', '화', '수', '목', '금', '토']
 const key = (y: number, m: number, d: number) => `${y}-${m}-${d}`
@@ -63,6 +63,7 @@ export function CalendarView({ schedule, initials, onSelectDay }: Props) {
           const work = day?.status === 'work'
           const style = day?.role ? ROLE_STYLE[day.role] : undefined
           const isToday = key(y, m, dnum) === todayKey
+          const hasNote = (day?.notes ?? []).some((n) => noteInvolves(n, initials))
 
           return (
             <button
@@ -75,25 +76,36 @@ export function CalendarView({ schedule, initials, onSelectDay }: Props) {
                 day ? 'active:bg-slate-100' : ''
               }`}
             >
-              {isToday ? (
-                <span className="inline-flex items-center justify-center self-start min-w-5 h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold tabular-nums shadow-sm">
-                  {dnum}
-                </span>
-              ) : (
-                <span
-                  className={`text-xs font-semibold ${
-                    !inMonth
-                      ? 'text-slate-300'
-                      : col === 0
-                        ? 'text-rose-500'
-                        : col === 6
-                          ? 'text-blue-500'
-                          : 'text-slate-500'
-                  }`}
-                >
-                  {dnum}
-                </span>
-              )}
+              <div className="flex items-start justify-between gap-0.5">
+                {isToday ? (
+                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold tabular-nums shadow-sm">
+                    {dnum}
+                  </span>
+                ) : (
+                  <span
+                    className={`text-xs font-semibold ${
+                      !inMonth
+                        ? 'text-slate-300'
+                        : col === 0
+                          ? 'text-rose-500'
+                          : col === 6
+                            ? 'text-blue-500'
+                            : 'text-slate-500'
+                    }`}
+                  >
+                    {dnum}
+                  </span>
+                )}
+                {hasNote && (
+                  <span
+                    className="text-[11px] leading-none text-amber-500"
+                    title="내 관련 비고 있음"
+                    aria-label="비고 있음"
+                  >
+                    ★
+                  </span>
+                )}
+              </div>
 
               {work && style && (
                 <span
