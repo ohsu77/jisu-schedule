@@ -5,8 +5,10 @@
 
 import {
   ROLE_COLS,
+  parseNote,
   type Role,
   type DaySchedule,
+  type DayNote,
   type RosterEntry,
   type Token,
 } from './schedule'
@@ -99,6 +101,13 @@ export function extractSchedule(tokens: Token[], initials: string): DaySchedule[
   const roleMin = Math.min(...centers) - spacing / 2
   const half = spacing / 2
 
+  // --- RMK (비고) column x-band: right of FL, left of KKM ---
+  // The remark cell is free text spanning many tokens, so it's captured by an
+  // x-window rather than nearest-column snapping.
+  const kkmX = header.find((t) => t.str === 'KKM')?.xc
+  const rmkLeft = colX['FL'] + spacing * 0.75
+  const rmkRight = kkmX != null ? kkmX - spacing * 0.75 : Infinity
+
   const nearestCol = (x: number): { col: Role; dist: number } => {
     let col: Role = ROLE_COLS[0]
     let dist = Infinity
@@ -163,6 +172,35 @@ export function extractSchedule(tokens: Token[], initials: string): DaySchedule[
       if (main || sub) roster.push({ role: c, main, sub })
     }
 
+    // --- RMK/비고: gather free-text tokens in the remark band, split into lines ---
+    const rmkToks = band
+      .filter((t) => t.xc >= rmkLeft && t.xc < rmkRight)
+      .sort((a, b) => a.yTop - b.yTop || a.xc - b.xc)
+    const notes: DayNote[] = []
+    let lineToks: Token[] = []
+    let lastY: number | null = null
+    const flush = () => {
+      if (!lineToks.length) return
+      const raw = lineToks.map((t) => t.str).join(' ')
+      const n = parseNote(raw)
+      if (n.text) notes.push(n)
+      lineToks = []
+    }
+    for (const t of rmkToks) {
+      if (lastY != null && Math.abs(t.yTop - lastY) > 4) flush()
+      lineToks.push(t)
+      lastY = t.yTop
+    }
+    flush()
+    // fold a continuation line (no "<targets> -" prefix, e.g. flight detail) into
+    // the preceding note so one remark cell stays a single note
+    for (let k = notes.length - 1; k > 0; k--) {
+      if (notes[k].targets.length === 0) {
+        notes[k - 1].text += ` ${notes[k].text}`
+        notes.splice(k, 1)
+      }
+    }
+
     // --- resolve the viewer's own slot from the roster ---
     let role: Role | undefined
     let mySub = false
@@ -173,7 +211,11 @@ export function extractSchedule(tokens: Token[], initials: string): DaySchedule[
     const present = band.some((t) => core(t.str) === who)
     const status: 'work' | 'off' = role || present ? 'work' : 'off'
 
-    out.push({ year, month, date, weekday, status, role, sub: role ? mySub : undefined, roster })
+    out.push({
+      year, month, date, weekday, status, role,
+      sub: role ? mySub : undefined, roster,
+      notes: notes.length ? notes : undefined,
+    })
   })
   return out
 }
